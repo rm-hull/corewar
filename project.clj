@@ -1,4 +1,4 @@
-(defproject rm-hull/inkspot "0.0.1-SNAPSHOT"
+(defproject rm-hull/corewar "0.0.1-SNAPSHOT"
   :description "A small Clojure/ClojureScript library for creating colour swatches"
   :url "https://github.com/rm-hull/corewar"
   :license {
@@ -19,6 +19,7 @@
     ;leiningen.cljsbuild
     ]
   :source-paths ["src"]
+  :profiles {:dev {:dependencies [[org.clojure/test.check "0.5.8"]]}}
   :cljsbuild {
     :repl-listen-port 9000
     :repl-launch-commands
