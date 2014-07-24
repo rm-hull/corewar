@@ -18,9 +18,10 @@
 })
 
 (def repr {
-  :immediate \#
-  :relative nil
-  :indirect \@
+  :immediate #(str \# %)
+  :relative str
+  :indirect #(str \@ %)
+  :undefined (constantly nil)
 })
 
 (def ^:private inverted-form (into {} (map (fn [[k v]] [v k]) encoded-form)))
@@ -66,8 +67,5 @@
 
 (defn to-string [operand]
   (when operand
-    (let [addr-mode (addressing-mode operand)]
-      (when-not (= addr-mode :undefined)
-        (str
-          (repr addr-mode)
-          (value operand))))))
+    (when-let [addr-mode (addressing-mode operand)]
+      ((repr addr-mode) (value operand)))))
