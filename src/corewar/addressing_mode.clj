@@ -65,7 +65,26 @@
 (defn valid? [operand]
   (not (nil? (addressing-mode operand))))
 
+(defn twos-complement [value]
+  (if (> value (/ const/core-size 2))
+    (- value const/core-size)
+    value))
+
 (defn to-string [operand]
   (when operand
     (when-let [addr-mode (addressing-mode operand)]
-      ((repr addr-mode) (value operand)))))
+      ((repr addr-mode) (twos-complement (value operand))))))
+
+(defn ^:private parse-int [x]
+  (if (number? x)
+    x
+    (Integer/parseInt x)))
+
+(defn parse [operand]
+  (let [operand (str operand)]
+    (if (empty? operand)
+      undefined
+      (condp = (first operand)
+        \@ (indirect (parse-int (subs operand 1)))
+        \# (immediate (parse-int (subs operand 1)))
+        (relative (parse-int operand))))))

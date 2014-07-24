@@ -37,10 +37,11 @@
 (def ^:private inverted-form (into {} (map (fn [[k v]] [v k]) encoded-form)))
 
 (defn ^:private encode [opcode a b]
-  (bit-or
-    (bit-shift-left (bit-and (encoded-form opcode) const/opcode-mask) const/opcode-position)
-    (bit-shift-left (bit-and a const/operand-mask) const/operand-position)
-    (bit-shift-left (bit-and b const/operand-mask) 0)))
+  (when-let [code (encoded-form opcode)]
+    (bit-or
+      (bit-shift-left (bit-and code const/opcode-mask) const/opcode-position)
+      (bit-shift-left (bit-and a const/operand-mask) const/operand-position)
+      (bit-shift-left (bit-and b const/operand-mask) 0))))
 
 (defn dat
   "Initialize location to value B."
@@ -112,3 +113,13 @@
         (name (opcode instr))
         (addr/to-string (operand-a instr))
         (addr/to-string (operand-b instr))))))
+
+(defn parse
+  ([opcode operand-b]
+   (parse opcode nil operand-b))
+  ([opcode operand-a operand-b]
+    (println (str "instr/parse: opcode=" opcode ", A=" operand-a ", B=" operand-b))
+    (encode
+      (keyword (str/lower-case opcode))
+      (addr/parse operand-a)
+      (addr/parse operand-b))))
