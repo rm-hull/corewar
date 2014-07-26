@@ -118,7 +118,6 @@
   ([opcode operand-b]
    (parse opcode nil operand-b))
   ([opcode operand-a operand-b]
-    (println (str "instr/parse: opcode=" opcode ", A=" operand-a ", B=" operand-b))
     (encode
       (keyword (str/lower-case opcode))
       (addr/parse operand-a)
