@@ -6,7 +6,7 @@
     :url "http://opensource.org/licenses/MIT"}
   :dependencies [
     [org.clojure/clojure "1.6.0"]
-    [org.clojure/clojurescript "0.0-2268"]
+    [org.clojure/clojurescript "0.0-2280"]
     [org.clojure/core.async "0.1.303.0-886421-alpha"]
     [rm-hull/cljs-test "0.0.8-SNAPSHOT"]]
   :scm {:url "git@github.com:rm-hull/corewar.git"}
@@ -19,7 +19,7 @@
     ;leiningen.cljsbuild
     ]
   :source-paths ["src"]
-  :profiles {:dev {:dependencies [[org.clojure/test.check "0.5.8"]]}}
+  :profiles {:dev {:dependencies [[org.clojure/test.check "0.5.9"]]}}
   :cljsbuild {
     :repl-listen-port 9000
     :repl-launch-commands
