@@ -114,6 +114,9 @@
   [machine-code]
   (map instr/to-string machine-code))
 
-(def assembly (assemble "resources/dwarf.red"))
+(comment
 
-(disassemble (:instr assembly))
+  (def assembly (assemble "resources/dwarf.red"))
+  (disassemble (:instr assembly))
+
+)
