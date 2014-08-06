@@ -56,8 +56,11 @@
   (encode :indirect value))
 
 (defn addressing-mode [operand]
-  (inverted-form
-    (bit-shift-right operand const/operand-bits)))
+  (when operand
+    (inverted-form
+      (bit-shift-right
+        operand
+        const/operand-bits))))
 
 (defn value [operand]
   (bit-and const/value-mask operand))
