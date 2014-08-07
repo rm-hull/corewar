@@ -77,7 +77,7 @@
       nil)))
 
 (defn ^:private assemble-instruction [[line-no prog-line] label-resolver]
-  (let [[opcode & operands] (tokens prog-line)
+  (let [[opcode & operands] (tokenize prog-line)
         operands (map #(label-resolver % line-no) operands)]
     (when (and opcode (pos? (count operands)))
       (when-let [instr (apply instr/parse opcode operands)]
