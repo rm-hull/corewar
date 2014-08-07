@@ -114,7 +114,7 @@
       :djz
       (let [address (operand :a :address)
             answer  (dec (operand :a :value))
-            new-context (assoc-in [:memory address] answer)]
+            new-context (assoc-in new-context [:memory address] answer)]
         (if (zero? answer)
           (assoc-in new-context [:index] (operand :b :value))
           new-context))
