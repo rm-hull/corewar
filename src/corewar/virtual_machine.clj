@@ -1,27 +1,16 @@
 (ns corewar.virtual-machine
   (:require
+    [corewar.memory :as mem]
+    [corewar.context :as ctx]
+    [corewar.assembler :as asm]
     [corewar.exceptions :as ex]
+    [corewar.constants :as const]
     [corewar.instruction-set :as instr]
     [corewar.addressing-mode :as addr]))
 
 (defn ^:private operand-result
   ([value] (operand-result value nil))
   ([value address] {:value value :address address}))
-
-; TODO: move into a context namespace
-(defn curr-instr
-  "Extracts the current instruction from the context, returns memory[index]"
-  [{:keys [index memory]}]
-  (memory index))
-
-; TODO: move into a context namespace
-(defn inc-index
-  "Non-destructive incrementing update on the index/address-pointer, ensuring that the
-   index always wraps round the limit of the memory"
-  [{:keys [memory] :as context}]
-  (let [mem-size (count memory)
-        inc-mod  #(mod (inc %) mem-size)]
-    (update-in context [:index] inc-mod)))
 
 (defn eval-operand
   "Returns the result of evaluating the operand against the memory:
@@ -39,23 +28,23 @@
 
    An operand with an invalid/undefined addressing mode will yield a nil result."
   [which-operand {:keys [memory index] :as context}]
-  (let [instr   (curr-instr context)
+  (let [instr   (ctx/read-memory context)
         operand (which-operand instr)]
 
     (case (addr/addressing-mode operand)
+
       :immediate
       (operand-result (addr/value operand))
 
       :relative
-      (let [mem-size (count memory)
-            address  (mod (+ index (addr/value operand)) mem-size)
+      (let [address  (mod (+ index (addr/value operand)) const/core-size)
             value    (memory address)]
+        ;(println "relative: index =" index ", value" (addr/value operand))
         (operand-result value address))
 
       :indirect
-      (let [mem-size (count memory)
-            pointer  (mod (+ index (addr/value operand)) mem-size)
-            address  (mod (+ pointer (memory pointer)) mem-size)
+      (let [pointer  (mod (+ index (addr/value operand)) const/core-size)
+            address  (mod (+ pointer (memory pointer)) const/core-size)
             value    (memory address)]
         (operand-result value address))
 
@@ -75,6 +64,7 @@
 
 (defn operand-accessor [context]
   (let [operands (eval-operands context)]
+    ;(println operands)
     (fn [& path]
       (if-let [result (get-in operands path)]
         result
@@ -82,62 +72,94 @@
 
 (defn execute-instr [context]
   (let [operand (operand-accessor context)
-        ; order is important here: always get the current instruction BEFORE incrementing the index
-        instr (curr-instr context)
-        new-context (inc-index context)]
+        instr   (ctx/read-memory context)]
 
     (case (instr/opcode instr)
-
+      ; MOV: Move A into B, then continue to the next instruction
       :mov
       (let [address (operand :b :address)
             value   (operand :a :value)]
-        (assoc-in new-context [:memory address] value))
+        (->
+          context
+          (ctx/write-memory address value)
+          (ctx/inc-index)))
 
+      ; ADD: Add A and B and store the result in B,
+      ; then continue to the next instruction
       :add
       (let [address (operand :b :address)
             answer  (+ (operand :b :value) (operand :a :value))]
-        (assoc-in new-context [:memory address] answer))
+        (->
+          context
+          (ctx/write-memory address answer)
+          (ctx/inc-index)))
 
+      ; SUB: Subtract A from B and store the result in B,
+      ; then continue to the next instruction
       :sub
       (let [address (operand :b :address)
             answer  (- (operand :b :value) (operand :a :value))]
-        (assoc-in new-context [:memory address] answer))
+        (->
+          context
+          (ctx/write-memory address answer)
+          (ctx/inc-index)))
 
+      ; JMP: Unconditionally jump to B
       :jmp
-      (assoc-in new-context [:index] (operand :b :value))
+      (ctx/set-index context (-> instr instr/operand-b addr/value))
 
+      ; JMZ: If A is zero, jump to B,
+      ; else continue to the next instruction
       :jmz
       (if (zero? (operand :a :value))
-        (assoc-in new-context [:index] (operand :b :value))
-        new-context)
+        (ctx/set-index context (-> instr instr/operand-b addr/value))
+        (ctx/inc-index context))
 
+      ; DJZ: Decrement A and store the result.
+      ; If the result is zero then jump to B,
+      ; else continue to the next instruction
       :djz
       (let [address (operand :a :address)
             answer  (dec (operand :a :value))
-            new-context (assoc-in new-context [:memory address] answer)]
+            context (ctx/write-memory context address answer)]
         (if (zero? answer)
-          (assoc-in new-context [:index] (operand :b :value))
-          new-context))
+          (ctx/set-index context (-> instr instr/operand-b addr/value))
+          (ctx/inc-index context)))
 
+      ; CMP: If the operands are equal then skip the next instruction,
+      ; else continue to the next instruction
       :cmp
       (if (= (operand :a :value) (operand :b :value))
-        (inc-index new-context)
-        new-context)
+        (ctx/set-index context 2)
+        (ctx/inc-index context))
 
-      ; default
+      ; default: report failure
       (ex/invalid-instruction context))))
 
-;(ex/invalid-addressing-mode context)
+
+(defn execute-program [context max-steps]
+  (if (zero? max-steps)
+    context
+    (let [new-ctx (-> context (dissoc :updated) execute-instr)]
+      (println (instr/to-string (ctx/read-memory context)) " :: " new-ctx)
+      (recur
+        new-ctx
+        (dec max-steps)))))
 
 
-(def mov (instr/mov (addr/immediate 4) (addr/relative 3)))
-(def core (vec (cons  mov (repeat 100 0))))
+(def core (vec (repeat 100 0)))
 (def context {:memory core :index 0})
-(def context {:memory core :index 2})
-(def context {:memory core :index 100})
-(inc-index context)
-(eval-operands context)
-(println core)
+(def assembly (asm/assemble "resources/dwarf.red"))
+(def start-posn 23)
+(def context (assoc assembly
+               :index (+ start-posn (:start assembly))
+               :memory (mem/load-program core start-posn (:instr assembly))))
 
+(asm/disassemble (:instr assembly))
 
+(println context)
+
+(def result (execute-program context 30))
+
+(asm/disassemble (:memory result))
 

@@ -1,6 +1,8 @@
 (ns corewar.memory
   "Responsible for loading programs into core memory at random
-   non-overlapping start positions")
+   non-overlapping start positions"
+  (:require
+    [clojure.set :refer [intersection]]))
 
 (defn load-program [core offset machine-code]
   (if (empty? machine-code)
@@ -12,12 +14,15 @@
 
 (defn make-configurations [core-size program-sizes]
   (vec
-    (repeatedly (count program-sizes)
+    (repeatedly
+      (count program-sizes)
       #(rand-int core-size))))
 
 (defn clock-range
   "Clock arithmetic version of range"
   [start end max-size]
+  (assert (pos? max-size))
+  (assert (<= start end))
   (->>
     (range start end)
     (map #(mod % max-size))))
@@ -34,7 +39,7 @@
     (not-every? empty?
       (for [j (range (count configurations))
             i (range j)]
-        (clojure.set/intersection
+        (intersection
           (build-range i)
           (build-range j))))))
 
@@ -52,7 +57,9 @@
 (def core (vec (repeat 100 0)))
 (overlapping? 300 [5 5 5] [10 10 50])
 (make-configurations 300 [5 5 5])
-(load-program-into-memory core 88 (range 30))
+(load-program core 88 (range 30))
 (tabula-rasa-monte-carlo 300 [20 20 16 14])
+(make-configurations 32 [])
+
 
 (defn make-core [size & assemblies])
