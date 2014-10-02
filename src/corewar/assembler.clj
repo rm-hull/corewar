@@ -22,10 +22,9 @@
     prog-line
     (strip-comment prog-line)))
 
-(defn ^:private read-file [file]
+(defn ^:private read-source [source-code]
   (->>
-    (slurp file)
-    (str/split-lines)
+    (str/split-lines source-code)
     (map (comp str/trim strip-non-metadata-comment))
     (remove empty?)))
 
@@ -101,8 +100,8 @@
      :author - the prescribed author (scraped from metadata)
      :strategy - notes associated with the strategy employed (scraped from metadata)
      :redcode - the spec version used.  "
-  [program-filename]
-  (let [annotated-program (add-line-numbers (read-file program-filename))
+  [source-code]
+  (let [annotated-program (add-line-numbers (read-source source-code))
         label-resolver (make-label-resolver annotated-program)]
     (->>
       annotated-program
@@ -116,7 +115,7 @@
 
 (comment
 
-  (def assembly (assemble "resources/dwarf.red"))
+  (def assembly (assemble (slurp "resources/dwarf.red")))
   (disassemble (:instr assembly))
 
 )

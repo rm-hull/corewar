@@ -148,7 +148,7 @@
 
 (def core (vec (repeat 100 0)))
 (def context {:memory core :index 0})
-(def assembly (asm/assemble "resources/dwarf.red"))
+(def assembly (asm/assemble (slurp "resources/dwarf.red")))
 (def start-posn 23)
 (def context (assoc assembly
                :index (+ start-posn (:start assembly))
