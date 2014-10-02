@@ -9,11 +9,13 @@
   (memory index))
 
 (defn write-memory
+  "Updates the memory at the given address in the context. Also adds
+   the address to an :updated vector"
   [context address value]
   (->
     context
     (assoc-in [:memory address] value)
-    (assoc :updated address)))
+    (update-in [:updated] conj address)))
 
 (defn inc-index
   "Non-destructive incrementing update on the index/address-pointer, ensuring that the

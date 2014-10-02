@@ -138,14 +138,13 @@
 
 
 (defn execute-program [context max-steps]
-  (if (zero? max-steps)
-    context
-    (let [new-ctx (-> context (dissoc :updated) execute-instr)]
-      (println (instr/to-string (ctx/read-memory context)) " :: " new-ctx)
+  (loop [ctx (assoc context :updated [])
+         n max-steps]
+    (if (zero? n)
+      ctx
       (recur
-        new-ctx
-        (dec max-steps)))))
-
+        (execute-instr ctx)
+        (dec n)))))
 
 (def core (vec (repeat 100 0)))
 (def context {:memory core :index 0})
