@@ -64,7 +64,10 @@
     :index (+ start-posn (get assembly :start 0))))
 
 (defn initial-state [size & assemblies]
-  (let [colors [:#D6FCDC :#FFE1DE :blue :yellow :orange]
+  (let [colors (shuffle
+                 [:#E16889 :#FE853E :#6EC59B :#FDBA52 :#F5DED0
+                  :#94614C :#2D97D3 :#48C3CB :#A9A6D3 :#C0C1BC ])
+        ;colors [:#55FFBE :#FFE1DE :#92DCD8 :#F5DE7C :orange]
         start-positions (->> (map count assemblies)
                              (tabula-rasa-monte-carlo size))]
     { :contexts (mapv init-context assemblies colors start-positions)
