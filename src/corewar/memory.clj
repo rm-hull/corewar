@@ -58,8 +58,9 @@
 (defn zip [& colls]
   (apply map list colls))
 
-(defn init-context [assembly color start-posn]
+(defn init-context [id assembly color start-posn]
   (assoc assembly
+    :id id
     :color color
     :index (+ start-posn (get assembly :start 0))))
 
@@ -70,7 +71,7 @@
         ;colors [:#55FFBE :#FFE1DE :#92DCD8 :#F5DE7C :orange]
         start-positions (->> (map count assemblies)
                              (tabula-rasa-monte-carlo size))]
-    { :contexts (mapv init-context assemblies colors start-positions)
+    {:contexts (mapv init-context (iterate inc 0) assemblies colors start-positions)
      :memory (->>
                (map :instr assemblies)
                (zip start-positions)
