@@ -136,9 +136,11 @@
       ; default: report failure
       (ex/invalid-instruction context))))
 
+(defn retain-n-historical [{:keys [executed hist-size]}]
+  (take (or hist-size 4) executed))
 
 (defn execute-program [context max-steps]
-  (loop [ctx (assoc context :updated #{} :executed #{})
+  (loop [ctx (assoc context :updated #{} :executed (retain-n-historical context))
          n max-steps]
     (if (zero? n)
       ctx
@@ -147,24 +149,19 @@
         (dec n)))))
 
 (comment
-  (def assembly (asm/assemble (slurp "resources/dwarf.red")))
 
-  (mem/initial-state 200 assembly)
+  (def assembly (asm/assemble (slurp "resources/imp.red")))
+  (def assembly (asm/assemble (slurp "resources/sleepy.red")))
+  (def state (mem/initial-state 200 assembly))
 
-  (def start-posn 23)
-  (def context (assoc assembly
-                 :index (+ start-posn (:start assembly))
-                 :memory (mem/load-program core start-posn (:instr assembly))))
+  (def context (assoc (first (:contexts state))
+                      :memory (:memory state)
+                      :executed (range 30)))
 
   (asm/disassemble (:instr assembly))
   (println context)
-  (def result (execute-program context 40))
+  (def result (execute-program context 1))
   (asm/disassemble (:memory result))
 )
-
-(def x #{1 2 3 4 5})
-(def y #{2 4 7})
-
-(clojure.set/union x y)
 
 
