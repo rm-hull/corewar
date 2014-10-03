@@ -20,11 +20,16 @@
 (defn inc-index
   "Non-destructive incrementing update on the index/address-pointer, ensuring that the
    index always wraps round the limit of the memory"
-  [{:keys [memory] :as context}]
+  [{:keys [memory index] :as context}]
   (let [inc-mod  #(mod (inc %) const/core-size)]
-    (update-in context [:index] inc-mod)))
+    (->
+      context
+      (update-in [:index] inc-mod)
+      (update-in [:executed] conj index))))
 
 (defn set-index
   [{:keys [memory index] :as context} delta]
-  (assoc context
-    :index (mod (+ index delta) const/core-size)))
+  (->
+    context
+    (assoc :index (mod (+ index delta) const/core-size))
+    (update-in [:executed] conj index)))
