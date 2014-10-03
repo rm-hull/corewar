@@ -61,7 +61,7 @@
 (defn init-context [assembly color start-posn]
   (assoc assembly
     :color color
-    :index (+ start-posn (:start assembly))))
+    :index (+ start-posn (get assembly :start 0))))
 
 (defn initial-state [size & assemblies]
   (let [colors [:#D6FCDC :#FFE1DE :blue :yellow :orange]
