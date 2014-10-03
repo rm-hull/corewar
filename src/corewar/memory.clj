@@ -4,13 +4,14 @@
   (:require
     [clojure.set :refer [intersection]]))
 
-(defn load-program [core offset machine-code]
+(defn load-program [core [offset machine-code]]
+  ; TODO - change to reduce-kv
   (if (empty? machine-code)
     core
     (recur
-      (assoc core offset (first machine-code))
-      (mod (inc offset) (count core))
-      (rest machine-code))))
+      (assoc (vec core) offset (first machine-code))
+      [(mod (inc offset) (count core))    ; next offset
+       (rest machine-code)])))            ; next machine instruction
 
 (defn make-configurations [core-size program-sizes]
   (vec
@@ -54,12 +55,21 @@
       configurations
       (recur (make-configurations core-size program-sizes)))))
 
-(def core (vec (repeat 100 0)))
-(overlapping? 300 [5 5 5] [10 10 50])
-(make-configurations 300 [5 5 5])
-(load-program core 88 (range 30))
-(tabula-rasa-monte-carlo 300 [20 20 16 14])
-(make-configurations 32 [])
+(defn zip [& colls]
+  (apply map list colls))
 
+(defn init-context [assembly color start-posn]
+  (assoc assembly
+    :color color
+    :index (+ start-posn (:start assembly))))
 
-(defn make-core [size & assemblies])
+(defn initial-state [size & assemblies]
+  (let [colors [:#D6FCDC :#FFE1DE :blue :yellow :orange]
+        start-positions (->> (map count assemblies)
+                             (tabula-rasa-monte-carlo size))]
+    { :contexts (mapv init-context assemblies colors start-positions)
+     :memory (->>
+               (map :instr assemblies)
+               (zip start-positions)
+               (reduce load-program (repeat size 0))
+               (vec))}))

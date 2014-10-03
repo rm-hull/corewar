@@ -138,7 +138,7 @@
 
 
 (defn execute-program [context max-steps]
-  (loop [ctx (assoc context :updated [])
+  (loop [ctx (assoc context :updated #{} :executed #{})
          n max-steps]
     (if (zero? n)
       ctx
@@ -146,19 +146,25 @@
         (execute-instr ctx)
         (dec n)))))
 
-(def core (vec (repeat 100 0)))
-(def context {:memory core :index 0})
-(def assembly (asm/assemble (slurp "resources/dwarf.red")))
-(def start-posn 23)
-(def context (assoc assembly
-               :index (+ start-posn (:start assembly))
-               :memory (mem/load-program core start-posn (:instr assembly))))
+(comment
+  (def assembly (asm/assemble (slurp "resources/dwarf.red")))
 
-(asm/disassemble (:instr assembly))
+  (mem/initial-state 200 assembly)
 
-(println context)
+  (def start-posn 23)
+  (def context (assoc assembly
+                 :index (+ start-posn (:start assembly))
+                 :memory (mem/load-program core start-posn (:instr assembly))))
 
-(def result (execute-program context 30))
+  (asm/disassemble (:instr assembly))
+  (println context)
+  (def result (execute-program context 40))
+  (asm/disassemble (:memory result))
+)
 
-(asm/disassemble (:memory result))
+(def x #{1 2 3 4 5})
+(def y #{2 4 7})
+
+(clojure.set/union x y)
+
 
