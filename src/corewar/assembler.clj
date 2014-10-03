@@ -2,14 +2,15 @@
   (:require
     [clojure.string :as str]
     [corewar.instruction-set :as instr]
-    [corewar.addressing-mode :as addr]))
+    [corewar.addressing-mode :as addr]
+    [corewar.compat :refer [starts-with]]))
 
 (defn ^:private ignore-exclusions? [^String prog-line]
   (or
-    (.startsWith prog-line ";redcode-")
-    (.startsWith prog-line ";name ")
-    (.startsWith prog-line ";author ")
-    (.startsWith prog-line ";strategy ")))
+    (starts-with prog-line ";redcode-")
+    (starts-with prog-line ";name ")
+    (starts-with prog-line ";author ")
+    (starts-with prog-line ";strategy ")))
 
 (defn ^:private strip-comment [^String prog-line]
   (let [idx (.indexOf prog-line ";")]

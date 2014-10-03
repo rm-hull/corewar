@@ -8,7 +8,9 @@
    addressing modes or additional ones, although you should be aware when you
    choose modes that Mars will load your Redcode program at an address in CORE
    that cannot be predicted in advance."
- (:require [corewar.constants :as const]))
+ (:require
+   [corewar.constants :as const]
+   [corewar.compat :refer [parse-int]]))
 
 (def encoded-form {
   :immediate 0x00
@@ -77,11 +79,6 @@
   (when operand
     (when-let [addr-mode (addressing-mode operand)]
       ((repr addr-mode) (twos-complement (value operand))))))
-
-(defn ^:private parse-int [x]
-  (if (number? x)
-    x
-    (Integer/parseInt x)))
 
 (defn parse [operand]
   (let [operand (str operand)]
